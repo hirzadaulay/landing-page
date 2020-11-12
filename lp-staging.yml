@@ -1,0 +1,52 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: lp-service
+  namespace: staging
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  #type: LoadBalancer
+  selector:
+    app: landing-page
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: lp-deployment
+  namespace: staging
+spec:
+  selector:
+    matchLabels:
+      app: landing-page
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: landing-page
+    spec:
+      containers:
+      - name: landing-page
+        image: hirzadaulay/lp:latest
+        ports:
+        - containerPort: 80
+        imagePullPolicy: "Always"
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: lp-ingress
+  namespace: staging
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: lp.bukber.xyz
+    http:
+      paths:
+      #- path: /
+      - backend:
+          serviceName: lp-service
+          servicePort: 80
